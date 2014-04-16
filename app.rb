@@ -1,5 +1,4 @@
 require "sinatra"
-require "pry"
 
 def location_detail_template
   template = <<-EOT.gsub(/^ {4}/, '')
