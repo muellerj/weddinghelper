@@ -6,9 +6,21 @@ class Symbol
   end
 end
 
+class Fixnum
+  def to_currency
+    "%.2f" % self
+  end
+end
+
+class Float
+  def to_currency
+    "%.2f" % self
+  end
+end
+
 class LocationDetailProcessor
   def moneyvars
-    vars = instance_variables.select { |v| instance_variable_get(v).class == Fixnum }
+    vars = instance_variables.select { |v| [Fixnum, Float].include? instance_variable_get(v).class }
   end
 
   def total
@@ -20,7 +32,7 @@ class LocationDetailProcessor
   end
 
   def vallength
-    [(moneyvars.map { |v| instance_variable_get(v).to_s }.map(&:length).max || 0), "**#{total}".length].max
+    [(moneyvars.map { |v| instance_variable_get(v).to_currency }.map(&:length).max || 0), "**#{total.to_currency}".length].max
   end
 
   def formatstring
@@ -35,8 +47,8 @@ class LocationDetailProcessor
     table = "\n\n"
     table << (formatstring % ["Posten", "Wert"])
     table << (formatstring % ["---", "---:"])
-    table << moneyvars.map { |var| formatstring % [var.humanize, instance_variable_get(var)] }.join
-    table << (formatstring_total % ["**TOTAL**", "**#{total}**"])
+    table << moneyvars.map { |var| formatstring % [var.humanize, instance_variable_get(var).to_currency] }.join
+    table << (formatstring % ["**TOTAL**", "**#{total.to_currency}**"])
     table << "\n"
     table
   end
@@ -76,9 +88,9 @@ class LocationDetailProcessor
       \`\`\`
       ---
 
-      Posten    | Wert
-      ---       | ---:
-      **TOTAL** |  **0**
+      Posten    |   Wert
+      ---       |   ---:
+      **TOTAL** | **0.00**
 
       ---
 
@@ -105,9 +117,9 @@ if __FILE__ == $0
 
     it "shows short instance variables, but not local variables" do
       subject.new(template.insert(197, "@foo = 100\nbar = 20\n")).call.tap do |content|
-        content.must_include "Foo       |   100"
+        content.must_include "Foo       |   100.00"
         content.wont_include "Bar"
-        content.must_include "**TOTAL** | **100**"
+        content.must_include "**TOTAL** | **100.00**"
       end
     end
 
@@ -118,10 +130,10 @@ if __FILE__ == $0
     end
 
     it "outputs nicely formatted tables correctly summed" do
-      subject.new(template.insert(197, "@foooooooooo = 100\n@bar = 20\n")).call.tap do |content|
-        content.must_include "Foooooooooo |   100"
-        content.must_include "Bar         |    20"
-        content.must_include "**TOTAL**   | **120**"
+      subject.new(template.insert(197, "@foooooooooo = 100.5\n@bar = 20\n")).call.tap do |content|
+        content.must_include "Foooooooooo |   100.50"
+        content.must_include "Bar         |    20.00"
+        content.must_include "**TOTAL**   | **120.50**"
       end
     end
 
