@@ -13,12 +13,23 @@ class LocationDetailProcessor
     moneyvars.reduce(0) { |sum, v| sum += instance_variable_get(v) }
   end
 
+  def keylength
+    (moneyvars.map(&:humanize).max { |a, b| a.length <=> b.length } || "**TOTAL**").length
+  end
+
+  def vallength
+    (moneyvars.map { |v| instance_variable_get(v).to_s }.max { |a, b| a.length <=> b.length } || "**0**").length
+  end
+
+  def formatstring
+    "%-#{keylength}s | %+#{vallength}s\n"
+  end
+
   def summarytable
-    table = "\n\nPosten | Wert\n"
-    table << " --- | ---:\n"
-    moneyvars.each do |var|
-      table << "#{var.humanize} | #{instance_variable_get(var).to_s}\n"
-    end
+    table = "\n\n"
+    table << (formatstring % ["Posten", "Wert"])
+    table << (formatstring % ["---", "---:"])
+    table << moneyvars.map { |var| formatstring % [var.humanize, instance_variable_get(var)] }.join
     table << "**TOTAL** | **#{total}**\n\n"
     table
   end
@@ -37,7 +48,7 @@ class LocationDetailProcessor
     @fileparts[2] = summarytable
     @fileparts.join("---")
   rescue Exception => exception
-    exception.class.to_s + ": " + exception.message
+    exception.inspect
   end
 
   def self.template
@@ -58,8 +69,8 @@ class LocationDetailProcessor
       \`\`\`
       ---
 
-      Posten | Wert
-      --- | ---:
+      Posten    |  Wert
+      ---       |  ---:
       **TOTAL** | **0**
 
       ---
@@ -82,7 +93,7 @@ if __FILE__ == $0
     let(:template) { subject.template }
 
     it "processes the template without change" do
-      subject.new(template) == template
+      subject.new(template).call.must_equal template
     end
 
     it "shows instance variables, but not local variables" do
@@ -95,6 +106,13 @@ if __FILE__ == $0
     it "can handle non-Fixnum instance variables" do
       subject.new(template.insert(197, "@foo = :bar\n")).call.tap do |content|
         content.wont_match /Foo/
+      end
+    end
+
+    it "outputs nicely formatted tables" do
+      subject.new(template.insert(197, "@foooooooooo = 100\n@bar = 20\n")).call.tap do |content|
+        content.must_match /Foooooooooo \| 100/
+        content.must_match /Bar         \|  20/
       end
     end
 
