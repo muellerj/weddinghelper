@@ -36,6 +36,8 @@ class LocationDetailProcessor
     eval codeblock
     @fileparts[2] = summarytable
     @fileparts.join("---")
+  rescue Exception => exception
+    exception.class.to_s + ": " + exception.message
   end
 
   def self.template
@@ -93,6 +95,13 @@ if __FILE__ == $0
     it "correctly sums up all subtotals" do
       subject.new(template.insert(49, "@foo = 100\n@bar = 20\n")).call.tap do |content|
         content.must_match /\*\*TOTAL\*\* \| \*\*120\*\*/
+      end
+    end
+
+    it "handles syntax errors gracefully" do
+      subject.new(template.insert(49, "foo\n")).call.tap do |content|
+        content.must_match /NameError/
+        content.must_match /undefined local variable or method \`foo'/
       end
     end
 
