@@ -6,7 +6,7 @@ end
 
 class LocationDetailProcessor
   def moneyvars
-    instance_variables.select { |v| instance_variable_get(v).class == Fixnum }
+    vars = instance_variables.select { |v| instance_variable_get(v).class == Fixnum }
   end
 
   def total
@@ -14,11 +14,11 @@ class LocationDetailProcessor
   end
 
   def keylength
-    (moneyvars.map(&:humanize).max { |a, b| a.length <=> b.length } || "**TOTAL**").length
+    [(moneyvars.map(&:humanize).map(&:length).max || 0), "**TOTAL**".length].max
   end
 
   def vallength
-    (moneyvars.map { |v| instance_variable_get(v).to_s }.max { |a, b| a.length <=> b.length } || "**0**").length
+    [(moneyvars.map { |v| instance_variable_get(v).to_s }.map(&:length).max || 0), "**0**".length].max
   end
 
   def formatstring
@@ -48,8 +48,8 @@ class LocationDetailProcessor
     eval codeblock
     @fileparts[2] = summarytable
     @fileparts.join("---")
-  rescue Exception => exception
-    exception.inspect
+  #rescue Exception => exception
+  #  exception.inspect
   end
 
   def self.template
@@ -100,13 +100,20 @@ if __FILE__ == $0
     it "shows instance variables, but not local variables" do
       subject.new(template.insert(197, "@foo = 100\nbar = 20\n")).call.tap do |content|
         content.must_match /Foo \| 100/
-        content.wont_match /Bar \| 20/
+        content.wont_match /Bar \|  20/
       end
     end
 
     it "can handle non-Fixnum instance variables" do
       subject.new(template.insert(197, "@foo = :bar\n")).call.tap do |content|
         content.wont_match /Foo/
+      end
+    end
+
+    it "aligns short content correctly" do
+      subject.new(template.insert(197, "@bar = 20\n")).call.tap do |content|
+        content.must_match /Bar       \|   20/
+        content.must_match /\*\*TOTAL\*\* \| \*\*20\*\*/
       end
     end
 
