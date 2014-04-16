@@ -24,5 +24,5 @@ get "/" do
 end
 
 post "/" do
-  render_form(LocationDetailProcessor.call(params[:content]))
+  render_form(LocationDetailProcessor.new(params[:content]).call)
 end
