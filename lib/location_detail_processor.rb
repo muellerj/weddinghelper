@@ -20,6 +20,7 @@ class LocationDetailProcessor
       table << "#{var.humanize} | #{instance_variable_get(var).to_s}\n"
     end
     table << "**TOTAL** | **#{total}**\n\n"
+    table
   end
 
   def codeblock
