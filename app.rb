@@ -1,30 +1,6 @@
 require "sinatra"
 require_relative "lib/location_detail_processor"
 
-def location_detail_template
-  template = <<-EOT.gsub(/^ {4}/, '')
-    # Template location
-
-    \`\`\`address
-    \`\`\`
-
-    ---
-    \`\`\`ruby
-    \`\`\`
-    ---
-
-    Posten | Wert
-    --- | ---:
-    **TOTAL** | **4200**
-
-    ---
-
-    [Zurueck zur Liste der Locations](../locationlist.markdown)
-  EOT
-  template
-end
-
-
 def render_form(content)
   erb <<-EOS
     <style>
@@ -44,9 +20,9 @@ def render_form(content)
 end
 
 get "/" do
-  render_form(location_detail_template)
+  render_form(LocationDetailProcessor.template)
 end
 
 post "/" do
-  render_form(LocationDetailProcessor.process_location_detail(params[:content]))
+  render_form(LocationDetailProcessor.call(params[:content]))
 end
