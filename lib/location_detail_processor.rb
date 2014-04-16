@@ -30,7 +30,8 @@ class LocationDetailProcessor
     table << (formatstring % ["Posten", "Wert"])
     table << (formatstring % ["---", "---:"])
     table << moneyvars.map { |var| formatstring % [var.humanize, instance_variable_get(var)] }.join
-    table << "**TOTAL** | **#{total}**\n\n"
+    table << (formatstring % ["**TOTAL**", "**#{total}**"])
+    table << "\n"
     table
   end
 
