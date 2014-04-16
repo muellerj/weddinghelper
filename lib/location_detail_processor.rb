@@ -20,11 +20,15 @@ class LocationDetailProcessor
   end
 
   def vallength
-    [(moneyvars.map { |v| instance_variable_get(v).to_s }.map(&:length).max || 0), "**#{total}**".length].max
+    [(moneyvars.map { |v| instance_variable_get(v).to_s }.map(&:length).max || 0), "**#{total}".length].max
   end
 
   def formatstring
     "%-#{keylength}s | %+#{vallength}s\n"
+  end
+
+  def formatstring_total
+    "%-#{keylength}s | %+#{[vallength, 6].max}s\n"
   end
 
   def summarytable
@@ -32,7 +36,7 @@ class LocationDetailProcessor
     table << (formatstring % ["Posten", "Wert"])
     table << (formatstring % ["---", "---:"])
     table << moneyvars.map { |var| formatstring % [var.humanize, instance_variable_get(var)] }.join
-    table << (formatstring % ["**TOTAL**", "**#{total}**"])
+    table << (formatstring_total % ["**TOTAL**", "**#{total}**"])
     table << "\n"
     table
   end
@@ -72,9 +76,9 @@ class LocationDetailProcessor
       \`\`\`
       ---
 
-      Posten    |  Wert
-      ---       |  ---:
-      **TOTAL** | **0**
+      Posten    | Wert
+      ---       | ---:
+      **TOTAL** |  **0**
 
       ---
 
@@ -101,8 +105,8 @@ if __FILE__ == $0
 
     it "shows short instance variables, but not local variables" do
       subject.new(template.insert(197, "@foo = 100\nbar = 20\n")).call.tap do |content|
-        content.must_include "Foo       |     100"
-        content.wont_include "Bar       |      20"
+        content.must_include "Foo       |   100"
+        content.wont_include "Bar"
         content.must_include "**TOTAL** | **100**"
       end
     end
@@ -115,8 +119,8 @@ if __FILE__ == $0
 
     it "outputs nicely formatted tables correctly summed" do
       subject.new(template.insert(197, "@foooooooooo = 100\n@bar = 20\n")).call.tap do |content|
-        content.must_include "Foooooooooo |     100"
-        content.must_include "Bar         |      20"
+        content.must_include "Foooooooooo |   100"
+        content.must_include "Bar         |    20"
         content.must_include "**TOTAL**   | **120**"
       end
     end
