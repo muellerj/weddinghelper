@@ -45,10 +45,16 @@ class LocationDetailProcessor
       # Template location
 
       \`\`\`address
+      Dudehome
+      Sample street 123
+      12345 Someplace
+      Tel. 123 / 45678901
       \`\`\`
 
       ---
       \`\`\`ruby
+      # Add your code for calculations here. All instance variables
+      # appear in the total.
       \`\`\`
       ---
 
@@ -80,26 +86,26 @@ if __FILE__ == $0
     end
 
     it "shows instance variables, but not local variables" do
-      subject.new(template.insert(49, "@foo = 100\nbar = 20\n")).call.tap do |content|
+      subject.new(template.insert(197, "@foo = 100\nbar = 20\n")).call.tap do |content|
         content.must_match /Foo \| 100/
         content.wont_match /Bar \| 20/
       end
     end
 
     it "can handle non-Fixnum instance variables" do
-      subject.new(template.insert(49, "@foo = :bar\n")).call.tap do |content|
+      subject.new(template.insert(197, "@foo = :bar\n")).call.tap do |content|
         content.wont_match /Foo/
       end
     end
 
     it "correctly sums up all subtotals" do
-      subject.new(template.insert(49, "@foo = 100\n@bar = 20\n")).call.tap do |content|
+      subject.new(template.insert(197, "@foo = 100\n@bar = 20\n")).call.tap do |content|
         content.must_match /\*\*TOTAL\*\* \| \*\*120\*\*/
       end
     end
 
     it "handles syntax errors gracefully" do
-      subject.new(template.insert(49, "foo\n")).call.tap do |content|
+      subject.new(template.insert(197, "foo\n")).call.tap do |content|
         content.must_match /NameError/
         content.must_match /undefined local variable or method \`foo'/
       end
