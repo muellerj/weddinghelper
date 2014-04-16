@@ -1,3 +1,9 @@
+class Symbol
+  def humanize
+    to_s.tr("@", "").capitalize
+  end
+end
+
 class LocationDetailProcessor
   def self.moneyvars
     instance_variables.select { |v| instance_variable_get(v).class == Fixnum }
@@ -11,7 +17,7 @@ class LocationDetailProcessor
     table = "\n\nPosten | Wert\n"
     table << " --- | ---:\n"
     moneyvars.each do |var|
-      table << "#{var.to_s.tr("@", "").capitalize} | #{instance_variable_get(var).to_s}\n"
+      table << "#{var.humanize} | #{instance_variable_get(var).to_s}\n"
     end
     table << "**TOTAL** | **#{total}**\n\n"
   end
