@@ -1,5 +1,3 @@
-require "pry"
-
 class Symbol
   def humanize
     to_s.tr("@", "").capitalize
