@@ -1,3 +1,5 @@
+#encoding: utf-8
+
 class Symbol
   def humanize
     to_s.tr("@", "").capitalize
@@ -53,6 +55,16 @@ class LocationDetailProcessor
 
   def codeblock
     @fileparts[1].scan(/\`\`\`ruby\n(.*?)\`\`\`/m).flatten.first
+  end
+
+  def guestcount
+    count = {}
+    statstr = `make statistics`
+    count[:total] = statstr.scan(/Anzahl Gäste: (\d+)/).flatten.first.to_i
+    count[:adults] = statstr.scan(/Erwachsene: (\d+)/).flatten.first.to_i
+    count[:children] = statstr.scan(/Kinder: (\d+)/).flatten.first.to_i
+    count[:babies] = statstr.scan(/Babies: (\d+)/).flatten.first.to_i
+    count
   end
 
   def initialize(content)
