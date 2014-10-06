@@ -54,7 +54,7 @@ class LocationDetailProcessor
   end
 
   def codeblock
-    @fileparts[1].scan(/\`\`\`ruby\n(.*?)\`\`\`/m).flatten.first
+    @fileparts[1][1..-1].gsub(/^ {4}/, "")
   end
 
   def guestcount
@@ -84,18 +84,14 @@ class LocationDetailProcessor
     <<-EOT.gsub(/^ {6}/, '')
       # Template location
 
-      \`\`\`address
-      Dudehome
-      Sample street 123
-      12345 Someplace
-      Tel. 123 / 45678901
-      \`\`\`
+          Dudehome
+          Sample street 123
+          12345 Someplace
+          Tel. 123 / 45678901
 
       ---
-      \`\`\`ruby
-      # Add your code for calculations here. All instance variables
-      # appear in the total.
-      \`\`\`
+          # Add your code for calculations here. All instance variables
+          # appear in the total.
       ---
 
       Posten    |   Wert
@@ -114,6 +110,7 @@ end
 if __FILE__ == $0
   require "minitest/autorun"
   require "minitest/pride"
+  require "pry"
 
   describe LocationDetailProcessor do
 
@@ -126,7 +123,7 @@ if __FILE__ == $0
     end
 
     it "shows short instance variables, but not local variables" do
-      subject.new(template.insert(197, "@foo = 100\nbar = 20\n")).call.tap do |content|
+      subject.new(template.insert(198, "    @foo = 100\n    bar = 20\n")).call.tap do |content|
         content.must_include "Foo       |   100.00"
         content.wont_include "Bar"
         content.must_include "**TOTAL** | **100.00**"
@@ -134,13 +131,14 @@ if __FILE__ == $0
     end
 
     it "can handle non-Fixnum instance variables" do
-      subject.new(template.insert(197, "@foo = :bar\n")).call.tap do |content|
+      subject.new(template.insert(198, "    @foo = :bar\n")).call.tap do |content|
         content.wont_include "Foo"
+        puts content
       end
     end
 
     it "outputs nicely formatted tables correctly summed" do
-      subject.new(template.insert(197, "@foooooooooo = 100.5\n@bar = 20\n")).call.tap do |content|
+      subject.new(template.insert(198, "    @foooooooooo = 100.5\n@bar = 20\n")).call.tap do |content|
         content.must_include "Foooooooooo |   100.50"
         content.must_include "Bar         |    20.00"
         content.must_include "**TOTAL**   | **120.50**"
@@ -148,7 +146,7 @@ if __FILE__ == $0
     end
 
     it "handles syntax errors gracefully" do
-      subject.new(template.insert(197, "foo\n")).call.tap do |content|
+      subject.new(template.insert(198, "    foo\n")).call.tap do |content|
         content.must_include "NameError"
         content.must_include "undefined local variable or method \`foo'"
       end
